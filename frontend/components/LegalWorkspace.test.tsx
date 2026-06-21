@@ -76,10 +76,12 @@ describe('LegalWorkspace', () => {
     await screen.findByText(/经济补偿通常按工作年限计算/)
     expect(screen.getByText('中华人民共和国劳动合同法')).toBeInTheDocument()
     expect(screen.getByText('法律研究员')).toBeInTheDocument()
-    expect(mockedSubscribeToRun).toHaveBeenCalledWith(
-      '/api/v1/chat/run-1/events',
-      expect.any(Function),
-      expect.any(Function),
+    await waitFor(() =>
+      expect(mockedSubscribeToRun).toHaveBeenCalledWith(
+        '/api/v1/chat/run-1/events',
+        expect.any(Function),
+        expect.any(Function),
+      ),
     )
   })
 
@@ -107,5 +109,19 @@ describe('LegalWorkspace', () => {
 
     await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('暂时无法完成研究'))
     expect(screen.getByRole('button', { name: '重新尝试' })).toBeInTheDocument()
+  })
+
+  it('submits the current textarea value even when React change state is stale', async () => {
+    mockedCreateChatRun.mockResolvedValue(run)
+    render(<LegalWorkspace />)
+    const input = screen.getByPlaceholderText('描述事实、时间与希望解决的问题…')
+    const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')?.set
+
+    setter?.call(input, '民法典关于保证责任有哪些规定？')
+    fireEvent.click(screen.getByRole('button', { name: '开始研究' }))
+
+    await waitFor(() =>
+      expect(mockedCreateChatRun).toHaveBeenCalledWith('民法典关于保证责任有哪些规定？', undefined),
+    )
   })
 })

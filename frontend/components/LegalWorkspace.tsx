@@ -28,11 +28,12 @@ export function LegalWorkspace() {
   const result = run?.result
   const agents = useMemo(() => result?.agents_executed ?? [], [result])
 
-  async function submit() {
-    if (query.trim().length < 2 || loading) return
+  async function submit(value?: string) {
+    const submittedQuery = (value ?? query).trim()
+    if (submittedQuery.length < 2 || loading) return
     setLoading(true); setError(null); setEvents([])
     try {
-      const nextRun = await createChatRun(query.trim(), run?.session_id)
+      const nextRun = await createChatRun(submittedQuery, run?.session_id)
       setRun(nextRun); setEvents(nextRun.result.events)
       setActiveEvidence(nextRun.result.evidence[0]?.article_id ?? null)
     } catch {

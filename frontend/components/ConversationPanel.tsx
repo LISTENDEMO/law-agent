@@ -1,3 +1,5 @@
+import { useRef } from 'react'
+
 import { ArrowUpRight, CornerDownLeft, LoaderCircle, RotateCcw, Sparkles } from 'lucide-react'
 
 interface ConversationPanelProps {
@@ -7,13 +9,16 @@ interface ConversationPanelProps {
   loading: boolean
   error: string | null
   onQueryChange: (value: string) => void
-  onSubmit: () => void
+  onSubmit: (value?: string) => void
 }
 
 const prompts = ['劳动合同违法解除如何计算赔偿？', '民法典关于保证责任有哪些规定？', '公司股权转让需要哪些程序？']
 
 export function ConversationPanel(props: ConversationPanelProps) {
   const hasResult = Boolean(props.answer || props.clarification)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const currentQuery = () => textareaRef.current?.value ?? props.query
+
   return (
     <section className="conversation-panel" aria-label="法律咨询对话">
       <div className="panel-kicker"><span>RESEARCH DESK / 01</span><b>事实与问题</b></div>
@@ -44,21 +49,22 @@ export function ConversationPanel(props: ConversationPanelProps) {
           </article>
         )}
         {props.error && (
-          <div className="error-card" role="alert"><b>暂时无法完成研究</b><span>{props.error}</span><button type="button" onClick={props.onSubmit}><RotateCcw size={14} />重新尝试</button></div>
+          <div className="error-card" role="alert"><b>暂时无法完成研究</b><span>{props.error}</span><button type="button" onClick={() => props.onSubmit(currentQuery())}><RotateCcw size={14} />重新尝试</button></div>
         )}
       </div>
       <div className="composer-shell">
         <textarea
+          ref={textareaRef}
           value={props.query}
           onChange={(event) => props.onQueryChange(event.target.value)}
           onKeyDown={(event) => {
-            if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) props.onSubmit()
+            if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) props.onSubmit(event.currentTarget.value)
           }}
           placeholder="描述事实、时间与希望解决的问题…"
           rows={3}
         />
         <div className="composer-meta"><span><CornerDownLeft size={13} /> Ctrl + Enter</span><span>请勿输入身份证号等敏感信息</span></div>
-        <button className="submit-button" type="button" disabled={props.loading || props.query.trim().length < 2} onClick={props.onSubmit}>开始研究<ArrowUpRight size={16} /></button>
+        <button className="submit-button" type="button" disabled={props.loading} onClick={() => props.onSubmit(currentQuery())}>开始研究<ArrowUpRight size={16} /></button>
       </div>
     </section>
   )
