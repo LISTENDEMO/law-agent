@@ -124,4 +124,18 @@ describe('LegalWorkspace', () => {
       expect(mockedCreateChatRun).toHaveBeenCalledWith('民法典关于保证责任有哪些规定？', undefined),
     )
   })
+
+  it('exposes stable fallback hooks for non-hydrated browser interaction', () => {
+    render(<LegalWorkspace />)
+
+    expect(screen.getByPlaceholderText('描述事实、时间与希望解决的问题…')).toHaveAttribute(
+      'data-lawagent-query',
+    )
+    expect(screen.getByRole('button', { name: '开始研究' })).toHaveAttribute(
+      'data-lawagent-submit',
+    )
+    expect(screen.getByRole('button', { name: /民法典关于保证责任/ })).toHaveAttribute(
+      'data-lawagent-prompt',
+    )
+  })
 })

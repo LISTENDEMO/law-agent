@@ -30,7 +30,7 @@ export function ConversationPanel(props: ConversationPanelProps) {
             <p>由研究、分析与审查 Agent 协作，逐条核验法规来源、版本与适用条件。</p>
             <div className="prompt-grid">
               {prompts.map((prompt, index) => (
-                <button key={prompt} type="button" onClick={() => props.onQueryChange(prompt)}>
+                <button key={prompt} type="button" data-lawagent-prompt={prompt} onClick={() => props.onQueryChange(prompt)}>
                   <em>0{index + 1}</em><span>{prompt}</span><ArrowUpRight size={15} />
                 </button>
               ))}
@@ -54,6 +54,7 @@ export function ConversationPanel(props: ConversationPanelProps) {
       </div>
       <div className="composer-shell">
         <textarea
+          data-lawagent-query
           ref={textareaRef}
           value={props.query}
           onChange={(event) => props.onQueryChange(event.target.value)}
@@ -64,7 +65,7 @@ export function ConversationPanel(props: ConversationPanelProps) {
           rows={3}
         />
         <div className="composer-meta"><span><CornerDownLeft size={13} /> Ctrl + Enter</span><span>请勿输入身份证号等敏感信息</span></div>
-        <button className="submit-button" type="button" disabled={props.loading} onClick={() => props.onSubmit(currentQuery())}>开始研究<ArrowUpRight size={16} /></button>
+        <button className="submit-button" type="button" data-lawagent-submit disabled={props.loading} onClick={() => props.onSubmit(currentQuery())}>开始研究<ArrowUpRight size={16} /></button>
       </div>
     </section>
   )

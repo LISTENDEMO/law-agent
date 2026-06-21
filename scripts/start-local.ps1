@@ -1,6 +1,6 @@
 param(
     [int]$BackendPort = 8765,
-    [int]$FrontendPort = 3001,
+    [int]$FrontendPort = 3003,
     [switch]$NoBrowser
 )
 

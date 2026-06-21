@@ -45,12 +45,12 @@ export function LegalWorkspace() {
     <main className="app-shell">
       <StatusHeader />
       <nav className="mobile-tabs" role="tablist" aria-label="工作台面板">
-        {([['chat', '对话'], ['evidence', '证据'], ['trace', '轨迹']] as const).map(([value, label]) => <button key={value} role="tab" aria-selected={panel === value} onClick={() => setPanel(value)}>{label}</button>)}
+        {([['chat', '对话'], ['evidence', '证据'], ['trace', '轨迹']] as const).map(([value, label]) => <button key={value} role="tab" data-lawagent-tab={value} aria-selected={panel === value} onClick={() => setPanel(value)}>{label}</button>)}
       </nav>
       <div className="workspace-grid">
-        <div className={panel === 'chat' ? 'mobile-active' : ''}><ConversationPanel query={query} answer={result?.answer ?? ''} clarification={result?.clarification ?? null} loading={loading} error={error} onQueryChange={setQuery} onSubmit={submit} /></div>
-        <div className={panel === 'evidence' ? 'mobile-active' : ''}><EvidencePanel evidence={result?.evidence ?? []} activeId={activeEvidence} onSelect={setActiveEvidence} /></div>
-        <div className={panel === 'trace' ? 'mobile-active' : ''}><TraceRail events={events} agents={agents} /></div>
+        <div className={panel === 'chat' ? 'mobile-active' : ''} data-lawagent-panel="chat"><ConversationPanel query={query} answer={result?.answer ?? ''} clarification={result?.clarification ?? null} loading={loading} error={error} onQueryChange={setQuery} onSubmit={submit} /></div>
+        <div className={panel === 'evidence' ? 'mobile-active' : ''} data-lawagent-panel="evidence"><EvidencePanel evidence={result?.evidence ?? []} activeId={activeEvidence} onSelect={setActiveEvidence} /></div>
+        <div className={panel === 'trace' ? 'mobile-active' : ''} data-lawagent-panel="trace"><TraceRail events={events} agents={agents} /></div>
       </div>
       <footer className="global-footer"><span>LAWAGENT / EVIDENCE-FIRST LEGAL INTELLIGENCE</span><span>中国大陆法律法规 · 更新于 2026.06</span></footer>
     </main>
