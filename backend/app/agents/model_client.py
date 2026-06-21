@@ -4,7 +4,7 @@ import json
 from collections.abc import Sequence
 from typing import Protocol
 
-from openai import AsyncOpenAI, OpenAIError
+from openai import AsyncOpenAI, OpenAI, OpenAIError
 
 from app.config import ProviderSettings
 
@@ -87,3 +87,66 @@ class ModelClient:
     async def embed_texts(self, texts: Sequence[str]) -> list[list[float]]:
         return await self._transport.embeddings(model=self._embedding_model, input=list(texts))
 
+
+class OpenAIEmbeddingClient:
+    def __init__(
+        self,
+        provider: ProviderSettings,
+        *,
+        max_retries: int = 2,
+        timeout: float = 60.0,
+    ) -> None:
+        self.model = provider.model
+        self._client = OpenAI(
+            api_key=provider.api_key.get_secret_value(),
+            base_url=provider.base_url,
+            max_retries=max_retries,
+            timeout=timeout,
+        )
+
+    def embed(self, texts: list[str]) -> list[list[float]]:
+        try:
+            response = self._client.embeddings.create(model=self.model, input=texts)
+        except OpenAIError as error:
+            raise ProviderFailure(f"embedding provider failed: {type(error).__name__}") from error
+        return [item.embedding for item in response.data]
+
+
+class OpenAIStructuredClient:
+    def __init__(
+        self,
+        provider: ProviderSettings,
+        *,
+        max_retries: int = 2,
+        timeout: float = 60.0,
+    ) -> None:
+        self.model = provider.model
+        self._client = OpenAI(
+            api_key=provider.api_key.get_secret_value(),
+            base_url=provider.base_url,
+            max_retries=max_retries,
+            timeout=timeout,
+        )
+
+    def complete_json(self, system_prompt: str, user_prompt: str) -> dict[str, object]:
+        try:
+            response = self._client.chat.completions.create(
+                model=self.model,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt},
+                ],
+                response_format={"type": "json_object"},
+            )
+        except OpenAIError as error:
+            raise ProviderFailure(f"chat provider failed: {type(error).__name__}") from error
+        content = response.choices[0].message.content
+        if not content:
+            raise ProviderFailure("chat provider returned empty content")
+        try:
+            value = json.loads(content)
+        except json.JSONDecodeError as error:
+            raise ProviderFailure("chat provider returned invalid structured output") from error
+        if not isinstance(value, dict):
+            raise ProviderFailure("chat provider returned a non-object JSON value")
+        return value

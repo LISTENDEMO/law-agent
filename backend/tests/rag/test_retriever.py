@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import date
 
 from app.domain.models import LegalArticle
-from app.rag.retriever import HybridRetriever, reciprocal_rank_fusion
+from app.rag.retriever import HybridRetriever, MatrixHybridRetriever, reciprocal_rank_fusion
 
 
 def _article(
@@ -84,3 +84,16 @@ def test_embedding_failure_falls_back_to_bm25() -> None:
 
     assert evidence[0].article_id == "1"
     assert evidence[0].retrieval_mode == "bm25_fallback"
+
+
+def test_matrix_retriever_searches_without_materializing_vector_dict() -> None:
+    articles = [_article("1", "劳动赔偿"), _article("2", "专利新颖性")]
+    retriever = MatrixHybridRetriever(
+        articles,
+        [[1.0, 0.0], [0.0, 1.0]],
+        lambda _query: [1.0, 0.0],
+    )
+
+    evidence = retriever.search("公司辞退", top_k=1)
+
+    assert evidence[0].article_id == "1"

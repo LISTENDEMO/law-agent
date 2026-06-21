@@ -84,3 +84,29 @@ def test_budget_exhaustion_terminates_workflow() -> None:
     assert result.status == "budget_exhausted"
     assert result.tool_calls == 1
     assert result.events[-1].type == "run.completed"
+
+
+def test_online_workflow_uses_independent_structured_agent_calls() -> None:
+    class FakeModel:
+        def __init__(self) -> None:
+            self.system_prompts: list[str] = []
+
+        def complete_json(self, system_prompt: str, user_prompt: str) -> dict[str, object]:
+            self.system_prompts.append(system_prompt)
+            if "Supervisor" in system_prompt:
+                return {"route": "complex", "risk_level": "high"}
+            if "Legal Analysis Agent" in system_prompt:
+                return {"analysis": "模型完成的要件分析"}
+            if "Critic Agent" in system_prompt:
+                return {"approved": True, "issues": []}
+            return {"answer": "模型生成的证据约束回答 [labor-47]"}
+
+    model = FakeModel()
+    workflow = AgentWorkflow(FakeSearch([_evidence()]), model=model)
+
+    result = workflow.run("公司违法辞退我，工作三年，应如何主张权利？")
+
+    assert "模型生成的证据约束回答" in result.answer
+    assert result.analysis == "模型完成的要件分析"
+    assert "critic" in result.agents_executed
+    assert len(model.system_prompts) == 4

@@ -11,3 +11,6 @@ ANALYSIS_PROMPT = """你是 Legal Analysis Agent。
 
 CRITIC_PROMPT = """你是独立 Critic Agent。检查证据覆盖、过度确定性、事实假设和高风险表达；
 你只能提出结构化审查意见，不能偷偷重写答案。"""
+
+ANSWER_PROMPT = """你是法律回答生成 Agent。只能使用提供的 evidence_id 和法条原文形成回答；
+每个法律结论必须在句末标注 [evidence_id]，证据不足时明确说明，不得补造法条。"""

@@ -80,6 +80,90 @@ class HybridRetriever:
         ]
 
 
+class MatrixHybridRetriever:
+    """Memory-efficient hybrid retrieval for the full legal corpus."""
+
+    def __init__(
+        self,
+        articles: Sequence[LegalArticle],
+        matrix: Sequence[Sequence[float]] | np.ndarray | None,
+        embed_query: Callable[[str], Sequence[float]] | None,
+    ) -> None:
+        self._articles = list(articles)
+        tokenized = [
+            _tokenize(f"{article.law_name} {article.article_number} {article.content}")
+            for article in self._articles
+        ]
+        self._bm25 = BM25Okapi(tokenized)
+        self._matrix = None if matrix is None else np.asarray(matrix, dtype=np.float32)
+        if self._matrix is not None and len(self._matrix) != len(self._articles):
+            raise ValueError("vector matrix row count must match articles")
+        self._norms = None if self._matrix is None else np.linalg.norm(self._matrix, axis=1)
+        self._embed_query = embed_query
+
+    def search(
+        self,
+        query: str,
+        *,
+        top_k: int = 8,
+        as_of_date: date | None = None,
+        jurisdiction: str = "中国大陆",
+    ) -> list[Evidence]:
+        eligible = [
+            index
+            for index, article in enumerate(self._articles)
+            if article.jurisdiction == jurisdiction
+            and article.status != "expired"
+            and (
+                as_of_date is None
+                or article.source_date is None
+                or article.source_date <= as_of_date
+            )
+        ]
+        if not eligible:
+            return []
+        candidate_count = max(top_k, 20)
+        lexical_scores = self._bm25.get_scores(_tokenize(query))
+        lexical_indices = sorted(
+            eligible,
+            key=lambda index: (-lexical_scores[index], self._articles[index].article_id),
+        )[:candidate_count]
+        rankings = [[self._articles[index].article_id for index in lexical_indices]]
+        mode = "bm25"
+
+        if self._matrix is not None and self._embed_query is not None and self._norms is not None:
+            try:
+                query_vector = np.asarray(self._embed_query(query), dtype=np.float32)
+                query_norm = np.linalg.norm(query_vector)
+                if query_norm and query_vector.shape[0] == self._matrix.shape[1]:
+                    scores = (self._matrix @ query_vector) / (self._norms * query_norm + 1e-12)
+                    vector_indices = sorted(
+                        eligible,
+                        key=lambda index: (-scores[index], self._articles[index].article_id),
+                    )[:candidate_count]
+                    rankings.append([self._articles[index].article_id for index in vector_indices])
+                    mode = "hybrid"
+            except Exception:
+                mode = "bm25_fallback"
+
+        fused_scores = _rrf_scores(rankings, 60)
+        ordered_ids = reciprocal_rank_fusion(rankings, 60)[:top_k]
+        articles_by_id = {article.article_id: article for article in self._articles}
+        return [
+            Evidence(
+                article_id=articles_by_id[item_id].article_id,
+                law_name=articles_by_id[item_id].law_name,
+                article_number=articles_by_id[item_id].article_number,
+                content=articles_by_id[item_id].content,
+                score=fused_scores[item_id],
+                retrieval_mode=mode,
+                source_date=articles_by_id[item_id].source_date,
+                status=articles_by_id[item_id].status,
+            )
+            for item_id in ordered_ids
+        ]
+
+
 def _bm25_rank(query: str, articles: Sequence[LegalArticle]) -> list[str]:
     tokenized = [
         _tokenize(f"{article.law_name} {article.article_number} {article.content}")
