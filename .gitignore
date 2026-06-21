@@ -1,0 +1,33 @@
+# Secrets
+.env
+.env.*.local
+
+# Local legal corpus and generated data
+RAG/
+data/
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+.venv/
+dist/
+*.egg-info/
+
+# Node / Next.js
+node_modules/
+.next/
+coverage/
+playwright-report/
+test-results/
+
+# Editors and OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Worktrees
+.worktrees/
