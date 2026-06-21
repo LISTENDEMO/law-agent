@@ -1,0 +1,11 @@
+.git
+.env
+.worktrees
+RAG
+data
+frontend/node_modules
+frontend/.next
+__pycache__
+.pytest_cache
+htmlcov
+
