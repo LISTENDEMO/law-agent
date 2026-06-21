@@ -50,6 +50,9 @@ class HybridRetriever:
         ]
         if not candidates:
             return []
+        exact = _exact_reference_evidence(query, candidates, top_k)
+        if exact:
+            return exact
 
         bm25_ranking = _bm25_rank(query, candidates)
         mode = "hybrid"
@@ -63,7 +66,8 @@ class HybridRetriever:
             mode = "bm25_fallback"
 
         scores = _rrf_scores(rankings, 60)
-        ordered_ids = reciprocal_rank_fusion(rankings, 60)[:top_k]
+        fused_ids = reciprocal_rank_fusion(rankings, 60)
+        ordered_ids = fused_ids[:top_k]
         articles_by_id = {article.article_id: article for article in candidates}
         return [
             Evidence(
@@ -122,6 +126,10 @@ class MatrixHybridRetriever:
         ]
         if not eligible:
             return []
+        eligible_articles = [self._articles[index] for index in eligible]
+        exact = _exact_reference_evidence(query, eligible_articles, top_k)
+        if exact:
+            return exact
         candidate_count = max(top_k, 20)
         lexical_scores = self._bm25.get_scores(_tokenize(query))
         lexical_indices = sorted(
@@ -147,7 +155,8 @@ class MatrixHybridRetriever:
                 mode = "bm25_fallback"
 
         fused_scores = _rrf_scores(rankings, 60)
-        ordered_ids = reciprocal_rank_fusion(rankings, 60)[:top_k]
+        fused_ids = reciprocal_rank_fusion(rankings, 60)
+        ordered_ids = fused_ids[:top_k]
         articles_by_id = {article.article_id: article for article in self._articles}
         return [
             Evidence(
@@ -205,6 +214,35 @@ def _rrf_scores(rankings: Sequence[Sequence[str]], k: int) -> dict[str, float]:
         for rank, item_id in enumerate(ranking, start=1):
             scores[item_id] += 1.0 / (k + rank)
     return dict(scores)
+
+
+def _exact_reference_evidence(
+    query: str, articles: Sequence[LegalArticle], top_k: int
+) -> list[Evidence]:
+    matches = [
+        article
+        for article in articles
+        if article.law_name in query and article.article_number in query
+    ]
+    if matches:
+        longest_number = max(len(article.article_number) for article in matches)
+        matches = [
+            article for article in matches if len(article.article_number) == longest_number
+        ]
+    matches = matches[:top_k]
+    return [
+        Evidence(
+            article_id=article.article_id,
+            law_name=article.law_name,
+            article_number=article.article_number,
+            content=article.content,
+            score=1.0,
+            retrieval_mode="exact_reference",
+            source_date=article.source_date,
+            status=article.status,
+        )
+        for article in matches
+    ]
 
 
 def _tokenize(value: str) -> list[str]:

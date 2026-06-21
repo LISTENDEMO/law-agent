@@ -48,6 +48,50 @@ def test_parse_docx_produces_stable_article_ids(tmp_path: Path) -> None:
     assert first.articles[0].article_id == second.articles[0].article_id
 
 
+def test_parse_docx_preserves_supplementary_article_numbers(tmp_path: Path) -> None:
+    path = tmp_path / "示例刑法-20240102.docx"
+    _write_docx(
+        path,
+        [
+            "第一百二十条 基础条文。",
+            "第一百二十条之一 补充条文一。",
+            "第一百二十条之十二 补充条文十二。",
+        ],
+    )
+
+    result = parse_docx(path)
+
+    assert [article.article_number for article in result.articles] == [
+        "第一百二十条",
+        "第一百二十条之一",
+        "第一百二十条之十二",
+    ]
+    assert len({article.article_id for article in result.articles}) == 3
+
+
+def test_parse_docx_disambiguates_restarted_numbering_in_compound_document(
+    tmp_path: Path,
+) -> None:
+    path = tmp_path / "复合规范-20240102.docx"
+    _write_docx(
+        path,
+        [
+            "第一条 第一份规则。",
+            "第二条 第一份规则的第二条。",
+            "第一条 第二份规则重新编号。",
+        ],
+    )
+
+    result = parse_docx(path)
+
+    assert [article.article_number for article in result.articles] == [
+        "第一条",
+        "第二条",
+        "第一条",
+    ]
+    assert len({article.article_id for article in result.articles}) == 3
+
+
 def test_parse_docx_uses_fallback_for_unstructured_content(tmp_path: Path) -> None:
     path = tmp_path / "通知.docx"
     _write_docx(path, ["关于示例事项的通知", "这是一段没有法条编号但需要检索的正文。"])

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 from app.config import Settings
 
 
@@ -48,3 +50,15 @@ def test_settings_reject_invalid_provider_url() -> None:
         assert "CHAT_BASE_URL" in str(error)
     else:
         raise AssertionError("invalid provider URL must be rejected")
+
+
+def test_settings_load_prefers_process_environment_over_env_file(
+    tmp_path: Path, monkeypatch
+) -> None:
+    env_file = tmp_path / ".env"
+    env_file.write_text("CHAT_MODEL=file-model\n", encoding="utf-8")
+    monkeypatch.setenv("CHAT_MODEL", "container-model")
+
+    settings = Settings.load(env_file)
+
+    assert settings.chat.model == "container-model"

@@ -131,7 +131,7 @@ class AgentWorkflow:
             analysis = self._analyze(query, evidence)
             _emit(events, "agent.completed", "legal_analysis", "完成法律要件分析")
 
-        answer = self._answer(query, evidence, analysis)
+        answer = _ensure_evidence_citation(self._answer(query, evidence, analysis), evidence)
         if risk_level == "high":
             agents.append("critic")
             _emit(events, "agent.started", "critic", "高风险问题进入强制独立审查")
@@ -252,6 +252,16 @@ def _model_payload(
         },
         ensure_ascii=False,
     )
+
+
+def _ensure_evidence_citation(answer: str, evidence: list[Evidence]) -> str:
+    if any(f"[{item.article_id}]" in answer for item in evidence):
+        return answer
+    references = "；".join(
+        f"[{item.article_id}] 《{item.law_name}》{item.article_number}"
+        for item in evidence[:3]
+    )
+    return f"{answer.rstrip()}\n\n证据引用：{references}"
 
 
 def _emit(events: list[AgentEvent], event_type: str, agent: str | None, summary: str) -> None:

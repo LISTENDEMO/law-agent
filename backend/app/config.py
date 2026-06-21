@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
@@ -75,7 +76,10 @@ class Settings:
     def load(cls, env_file: str | Path = ".env") -> Settings:
         from dotenv import dotenv_values
 
-        values = {key: value for key, value in dotenv_values(env_file).items() if value is not None}
+        values = {
+            key: value for key, value in dotenv_values(env_file).items() if value is not None
+        }
+        values.update(os.environ)
         return cls.from_mapping(values)
 
 

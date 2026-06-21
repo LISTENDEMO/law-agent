@@ -9,7 +9,8 @@ from docx import Document
 
 from app.domain.models import LawDocument, LegalArticle
 
-_ARTICLE_PATTERN = re.compile(r"^(第[〇零一二三四五六七八九十百千万0-9]+条)(?:\s*)(.*)$")
+_NUMERALS = "〇零一二三四五六七八九十百千万0-9"
+_ARTICLE_PATTERN = re.compile(rf"^(第[{_NUMERALS}]+条(?:之[{_NUMERALS}]+)?)(?:\s*)(.*)$")
 _CONTEXT_PATTERN = re.compile(
     r"^第[〇零一二三四五六七八九十百千万0-9]+(?:编|章|节)\s*.*$"
 )
@@ -58,14 +59,20 @@ def _split_articles(
     current_number: str | None = None
     current_content: list[str] = []
     current_context: list[str] = []
+    number_occurrences: dict[str, int] = {}
 
     def flush() -> None:
         if current_number is None:
             return
         content = "\n".join(current_content)
+        occurrence = number_occurrences.get(current_number, 0) + 1
+        number_occurrences[current_number] = occurrence
+        article_id = _stable_id(document_id, current_number)
+        if occurrence > 1:
+            article_id = _stable_id(document_id, current_number, f"occurrence-{occurrence}")
         result.append(
             LegalArticle(
-                article_id=_stable_id(document_id, current_number),
+                article_id=article_id,
                 document_id=document_id,
                 law_name=law_name,
                 article_number=current_number,

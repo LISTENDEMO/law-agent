@@ -87,15 +87,12 @@ class EmbeddingIndexBuilder:
             rows = connection.execute(
                 "SELECT article_id, vector_json FROM embeddings WHERE model = ?",
                 (self.embedding_model,),
-            ).fetchall()
-        vectors_by_id = {
-            article_id: json.loads(vector_json)
-            for article_id, vector_json in rows
-            if article_id in current_ids
-        }
-        metadata = self.index.save(
-            articles, vectors_by_id, embedding_model=self.embedding_model
-        )
+            )
+            metadata = self.index.save_items(
+                articles,
+                ((article_id, json.loads(vector_json)) for article_id, vector_json in rows),
+                embedding_model=self.embedding_model,
+            )
         return BuildReport(
             total_articles=len(articles),
             cached_before=cached_before,

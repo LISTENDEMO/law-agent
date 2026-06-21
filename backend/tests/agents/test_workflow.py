@@ -110,3 +110,18 @@ def test_online_workflow_uses_independent_structured_agent_calls() -> None:
     assert result.analysis == "模型完成的要件分析"
     assert "critic" in result.agents_executed
     assert len(model.system_prompts) == 4
+
+
+def test_online_answer_gets_a_verified_evidence_id_when_model_omits_citation() -> None:
+    class CitationOmittingModel:
+        def complete_json(self, system_prompt: str, user_prompt: str) -> dict[str, object]:
+            if "Supervisor" in system_prompt:
+                return {"route": "simple", "risk_level": "low"}
+            return {"answer": "模型给出了结论，但漏掉了引用。"}
+
+    result = AgentWorkflow(
+        FakeSearch([_evidence()]), model=CitationOmittingModel()
+    ).run("劳动合同法第四十七条规定了什么？")
+
+    assert "[labor-47]" in result.answer
+    assert "《中华人民共和国劳动合同法》第四十七条" in result.answer

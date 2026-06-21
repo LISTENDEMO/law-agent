@@ -83,7 +83,7 @@ def create_default_app() -> FastAPI:
     settings = Settings.load()
     repository = Repository(settings.data_dir / "lawagent.db")
     model = None
-    if not settings.offline_mode:
+    if not settings.offline_mode and settings.chat.api_key.get_secret_value():
         model = OpenAIStructuredClient(
             settings.chat,
             max_retries=settings.max_retries,

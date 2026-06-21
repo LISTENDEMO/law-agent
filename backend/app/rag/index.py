@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Iterable
 from pathlib import Path
 
 import numpy as np
@@ -25,16 +26,41 @@ class PersistentIndex:
         *,
         embedding_model: str,
     ) -> IndexMetadata:
+        return self.save_items(articles, vectors.items(), embedding_model=embedding_model)
+
+    def save_items(
+        self,
+        articles: list[LegalArticle],
+        vector_items: Iterable[tuple[str, list[float]]],
+        *,
+        embedding_model: str,
+    ) -> IndexMetadata:
+        """Persist a vector stream without materializing a dict of Python floats."""
         if not articles:
             raise ValueError("cannot save an empty index")
-        missing = [article.article_id for article in articles if article.article_id not in vectors]
-        if missing:
-            raise ValueError(f"missing vectors for {len(missing)} articles")
-        dimensions = {len(vectors[article.article_id]) for article in articles}
-        if len(dimensions) != 1 or 0 in dimensions:
-            raise ValueError("inconsistent vector dimension")
+        positions = {article.article_id: index for index, article in enumerate(articles)}
+        seen = np.zeros(len(articles), dtype=np.bool_)
+        matrix: np.ndarray | None = None
+        dimension = 0
+        for article_id, vector in vector_items:
+            position = positions.get(article_id)
+            if position is None:
+                continue
+            if matrix is None:
+                dimension = len(vector)
+                if dimension == 0:
+                    raise ValueError("inconsistent vector dimension")
+                matrix = np.empty((len(articles), dimension), dtype=np.float32)
+            if len(vector) != dimension:
+                raise ValueError("inconsistent vector dimension")
+            matrix[position] = vector
+            seen[position] = True
+        missing_count = int((~seen).sum())
+        if missing_count:
+            raise ValueError(f"missing vectors for {missing_count} articles")
+        if matrix is None:
+            raise ValueError("missing vectors for all articles")
 
-        dimension = dimensions.pop()
         metadata = IndexMetadata(
             embedding_model=embedding_model,
             article_count=len(articles),
@@ -47,7 +73,6 @@ class PersistentIndex:
             encoding="utf-8",
         )
         ids = np.asarray([article.article_id for article in articles])
-        matrix = np.asarray([vectors[article.article_id] for article in articles], dtype=np.float32)
         np.savez_compressed(self.directory / "vectors.npz", ids=ids, vectors=matrix)
         (self.directory / "metadata.json").write_text(
             metadata.model_dump_json(indent=2), encoding="utf-8"

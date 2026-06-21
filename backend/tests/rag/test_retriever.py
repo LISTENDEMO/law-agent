@@ -97,3 +97,33 @@ def test_matrix_retriever_searches_without_materializing_vector_dict() -> None:
     evidence = retriever.search("公司辞退", top_k=1)
 
     assert evidence[0].article_id == "1"
+
+
+def test_matrix_retriever_prioritizes_explicit_law_and_article_reference() -> None:
+    articles = [_article("1", "普通内容"), _article("2", "语义上不相关的精确法条")]
+
+    def embedding_must_not_run(_query: str) -> list[float]:
+        raise AssertionError("exact references should bypass semantic retrieval")
+
+    retriever = MatrixHybridRetriever(
+        articles,
+        [[1.0, 0.0], [0.0, 1.0]],
+        embedding_must_not_run,
+    )
+
+    evidence = retriever.search("《示例法》第2条的内容是什么？", top_k=1)
+
+    assert evidence[0].article_id == "2"
+    assert evidence[0].retrieval_mode == "exact_reference"
+
+
+def test_exact_reference_prefers_supplementary_article_over_base_number() -> None:
+    base = _article("base", "基础条文")
+    base.article_number = "第一百二十条"
+    supplement = _article("supplement", "补充条文")
+    supplement.article_number = "第一百二十条之一"
+    retriever = MatrixHybridRetriever([base, supplement], None, None)
+
+    evidence = retriever.search("《示例法》第一百二十条之一是什么？", top_k=8)
+
+    assert [item.article_id for item in evidence] == ["supplement"]

@@ -48,3 +48,21 @@ def test_persistent_index_rejects_inconsistent_vector_dimensions(tmp_path: Path)
         assert "dimension" in str(error)
     else:
         raise AssertionError("inconsistent vectors must be rejected")
+
+
+def test_persistent_index_saves_vectors_from_single_pass_iterable(tmp_path: Path) -> None:
+    index = PersistentIndex(tmp_path / "index")
+    articles = [_article("1", "劳动合同解除"), _article("2", "专利新颖性")]
+    consumed: list[str] = []
+
+    def vector_items():
+        for article_id, vector in [("2", [0.0, 1.0]), ("1", [1.0, 0.0])]:
+            consumed.append(article_id)
+            yield article_id, vector
+
+    metadata = index.save_items(articles, vector_items(), embedding_model="test-v1")
+    _articles, vectors, _metadata = index.load()
+
+    assert consumed == ["2", "1"]
+    assert vectors == {"1": [1.0, 0.0], "2": [0.0, 1.0]}
+    assert metadata.dimension == 2
