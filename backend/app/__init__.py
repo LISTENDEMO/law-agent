@@ -1,0 +1,2 @@
+"""LawAgent backend package."""
+
