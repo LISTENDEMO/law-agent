@@ -3,7 +3,7 @@
 .env.*.local
 
 # Local legal corpus and generated data
-RAG/
+/RAG/
 data/
 
 # Python
