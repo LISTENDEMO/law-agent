@@ -35,6 +35,7 @@ class Evidence(BaseModel):
     article_number: str
     content: str
     score: float = 0.0
+    retrieval_mode: str = "hybrid"
     source_date: date | None = None
     status: str = "unknown"
 
@@ -52,4 +53,3 @@ class CorpusReport(BaseModel):
     quarantined: int
     article_count: int
     issues: list[CorpusIssue] = Field(default_factory=list)
-
