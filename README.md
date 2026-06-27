@@ -2,6 +2,152 @@
 
 LawAgent 是一个面向中国大陆法律法规的、证据优先的多 Agent 法律研究系统。Supervisor 动态委派 Legal Research、Legal Analysis 和 Critic Agent；混合检索提供法规证据，确定性校验限制引用范围，前端展示回答、法条和完整执行轨迹。
 
+## Agent 编排架构
+
+```mermaid
+graph TD
+    A[用户输入法律问题] --> B[Supervisor Agent]
+    
+    B --> C{路由决策}
+    C -->|缺少关键事实| D[生成澄清问题]
+    D --> E[等待用户补充]
+    
+    C -->|简单条文查询| F[Legal Research Agent]
+    C -->|复杂适用分析| F
+    
+    F --> G[混合检索引擎]
+    G --> H[BM25 检索]
+    G --> I[向量检索]
+    H --> J[RRF 融合排序]
+    I --> J
+    J --> K[Cross-Encoder Rerank]
+    K --> L[返回证据列表]
+    
+    L --> M{证据是否充分?}
+    M -->|不充分| N[改写查询重试]
+    N --> F
+    M -->|充分| O{问题类型?}
+    
+    O -->|简单查询| P[生成回答]
+    O -->|复杂分析| Q[Legal Analysis Agent]
+    
+    Q --> R[法律要件映射]
+    R --> S[识别争议焦点]
+    S --> T[生成结构化分析]
+    T --> P
+    
+    P --> U{风险等级判定}
+    U -->|高风险| V[Critic Agent]
+    U -->|低/中风险| W[确定性引用校验]
+    
+    V --> X[独立审查证据支持]
+    X --> Y[检查遗漏和冲突]
+    Y --> Z[降低确定性并添加专业建议]
+    Z --> W
+    
+    W --> AA[最终输出]
+    AA --> AB[前端展示]
+    
+    AB --> AC[回答 + 法条引用]
+    AB --> AD[证据卡片]
+    AB --> AE[执行轨迹]
+    
+    style B fill:#4A90E2,color:#fff
+    style F fill:#7B68EE,color:#fff
+    style Q fill:#7B68EE,color:#fff
+    style V fill:#FF6B6B,color:#fff
+    style G fill:#50C878,color:#fff
+    style W fill:#FFA500,color:#fff
+```
+
+### Agent 角色与职责
+
+#### 🎯 Supervisor Agent
+**目标**: 理解问题、判断信息完整性、拆分任务、控制预算并汇总结果
+
+**决策能力**:
+- 请求用户补充关键事实（澄清路由）
+- 委派法规研究任务（简单/复杂路由）
+- 委派法律要件分析任务
+- 请求独立审查（高风险强制 Critic）
+- 在证据不足或预算耗尽时停止并降级
+
+#### 🔍 Legal Research Agent
+**目标**: 找到与问题匹配的有效法规证据
+
+**工具权限**:
+- `hybrid_search`: 混合检索（BM25 + Vector + RRF）
+- `get_article_context`: 获取法条上下文
+- `get_law_version`: 查询法规版本
+- `find_related_articles`: 查找关联法条
+
+**自主循环**: 制定查询 → 检索 → 评估结果 → 改写查询（最多三轮）
+
+#### ⚖️ Legal Analysis Agent
+**目标**: 将用户事实映射为法律要件，识别争议焦点
+
+**工具权限**:
+- `read_evidence`: 读取证据内容
+- `get_analysis_template`: 获取分析模板
+
+**输出要求**: 区分已陈述事实、合理假设和未知事实
+
+#### 🛡️ Critic Agent
+**目标**: 独立检查证据支持、遗漏、冲突和风险表达
+
+**工具权限**:
+- `read_evidence`: 读取证据
+- `check_claim_support`: 检查结论证据支持
+- `check_law_status`: 检查法规效力状态
+
+**强制触发条件**: 刑事、人身安全、重大财产处分等高风险问题
+
+### 控制与降级机制
+
+```mermaid
+graph LR
+    A[输入问题] --> B[安全检查]
+    B --> C[工具白名单校验]
+    C --> D[Token 预算控制]
+    D --> E[最多 12 次工具调用]
+    E --> F[最多 2 次全局返工]
+    
+    F --> G{模型失败?}
+    G -->|是| H[有限重试]
+    G -->|否| I{证据不足?}
+    
+    H --> J{持续失败?}
+    J -->|是| K[返回已确认资料]
+    J -->|否| F
+    
+    I -->|是| L[追问或拒绝确定性结论]
+    I -->|否| M{Schema 错误?}
+    
+    M -->|是| N[允许一次结构修复]
+    M -->|否| O[引用校验]
+    
+    N --> P{仍失败?}
+    P -->|是| Q[终止任务]
+    P -->|否| O
+    
+    O --> R[最终输出]
+    
+    style B fill:#FF6B6B,color:#fff
+    style D fill:#FFA500,color:#fff
+    style E fill:#FFA500,color:#fff
+    style F fill:#FFA500,color:#fff
+    style L fill:#50C878,color:#fff
+    style K fill:#50C878,color:#fff
+```
+
+**保障措施**:
+- ✅ Supervisor 只能选择白名单 Agent
+- ✅ Research 最多三轮检索
+- ✅ 全局最多两次返工
+- ✅ Token、工具调用、墙钟时间预算
+- ✅ 证据不足时明确说明不确定性
+- ✅ 高风险问题强制 Critic + 专业建议
+
 ## 已实现能力
 
 - 1032 份本地法规的 DOCX 结构化解析与质量审计。
