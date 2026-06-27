@@ -42,6 +42,7 @@ class Settings:
     max_retries: int
     max_tool_calls: int
     max_input_chars: int
+    model_timeout_seconds: float
 
     @classmethod
     def from_mapping(cls, environment: Mapping[str, str]) -> Settings:
@@ -70,6 +71,9 @@ class Settings:
             max_retries=_positive_int(environment, "LAWAGENT_MAX_RETRIES", 2),
             max_tool_calls=_positive_int(environment, "LAWAGENT_MAX_TOOL_CALLS", 12),
             max_input_chars=_positive_int(environment, "LAWAGENT_MAX_INPUT_CHARS", 6000),
+            model_timeout_seconds=_positive_float(
+                environment, "LAWAGENT_MODEL_TIMEOUT_SECONDS", 18.0
+            ),
         )
 
     @classmethod
@@ -91,6 +95,13 @@ def _validate_url(name: str, value: str) -> None:
 
 def _positive_int(environment: Mapping[str, str], name: str, default: int) -> int:
     value = int(environment.get(name, str(default)))
+    if value <= 0:
+        raise ValueError(f"{name} must be positive")
+    return value
+
+
+def _positive_float(environment: Mapping[str, str], name: str, default: float) -> float:
+    value = float(environment.get(name, str(default)))
     if value <= 0:
         raise ValueError(f"{name} must be positive")
     return value

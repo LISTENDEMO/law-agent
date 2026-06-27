@@ -1,0 +1,1113 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LawAgent - 智能法律咨询</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;900&family=Source+Serif+Pro:wght@300;400;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+    <style>
+        /* ========================================
+           CSS Variables - Neo-Legal Palette
+           ======================================== */
+        :root {
+            --ink-deep: #1A1A2E;
+            --ink-medium: #16213E;
+            --ink-light: #0F3460;
+            --legal-gold: #C9A227;
+            --gold-light: #D4AF37;
+            --gold-dark: #B8860B;
+            --evidence-red: #E63946;
+            --paper-white: #F5F5DC;
+            --paper-cream: #FFF8E7;
+            --steel-gray: #4A4A4A;
+            --steel-light: #6B6B6B;
+            --border-dark: #2D2D44;
+            --shadow-soft: rgba(26, 26, 46, 0.3);
+            --shadow-hard: rgba(26, 26, 46, 0.6);
+
+            /* Typography */
+            --font-display: 'Playfair Display', Georgia, serif;
+            --font-body: 'Source Serif Pro', Georgia, serif;
+            --font-mono: 'JetBrains Mono', monospace;
+
+            /* Spacing */
+            --space-xs: 4px;
+            --space-sm: 8px;
+            --space-md: 16px;
+            --space-lg: 32px;
+            --space-xl: 64px;
+            --space-xxl: 96px;
+        }
+
+        /* ========================================
+           Base Styles - Brutalist Foundation
+           ======================================== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            font-size: 16px;
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: var(--font-body);
+            background-color: var(--ink-deep);
+            color: var(--paper-cream);
+            line-height: 1.6;
+            min-height: 100vh;
+
+            /* Grain texture overlay */
+            background-image:
+                url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+            background-blend-mode: overlay;
+            background-attachment: fixed;
+        }
+
+        /* ========================================
+           Header - Editorial Masthead
+           ======================================== */
+        .masthead {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 80px;
+            background: linear-gradient(180deg, var(--ink-deep) 0%, transparent 100%);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: var(--space-lg) var(--space-xl);
+            border-bottom: 2px solid var(--legal-gold);
+        }
+
+        .masthead-brand {
+            display: flex;
+            align-items: baseline;
+            gap: var(--space-sm);
+        }
+
+        .masthead-title {
+            font-family: var(--font-display);
+            font-size: 2rem;
+            font-weight: 900;
+            color: var(--paper-cream);
+            letter-spacing: -0.02em;
+            text-transform: uppercase;
+        }
+
+        .masthead-subtitle {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: var(--legal-gold);
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: var(--space-xs) var(--space-sm);
+            border: 1px solid var(--legal-gold);
+            background: transparent;
+        }
+
+        .masthead-status {
+            display: flex;
+            align-items: center;
+            gap: var(--space-md);
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+            font-family: var(--font-mono);
+            font-size: 0.875rem;
+            color: var(--steel-light);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--legal-gold);
+            border-radius: 50%;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.2); }
+        }
+
+        /* ========================================
+           Main Layout - Asymmetric Grid
+           ======================================== */
+        .main-container {
+            display: grid;
+            grid-template-columns: 1fr 380px;
+            gap: 0;
+            min-height: 100vh;
+            padding-top: 80px;
+        }
+
+        /* ========================================
+           Chat Panel - Primary Interface
+           ======================================== */
+        .chat-panel {
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 80px);
+            background: var(--ink-medium);
+            position: relative;
+
+            /* Diagonal accent line */
+            &::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 200px;
+                height: 100%;
+                background: linear-gradient(135deg, var(--ink-light) 0%, transparent 50%);
+                opacity: 0.3;
+            }
+        }
+
+        .chat-header {
+            padding: var(--space-lg) var(--space-xl);
+            border-bottom: 1px solid var(--border-dark);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .chat-label {
+            font-family: var(--font-display);
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--paper-cream);
+            display: flex;
+            align-items: center;
+            gap: var(--space-md);
+        }
+
+        .chat-label::before {
+            content: '§';
+            font-family: var(--font-display);
+            font-size: 1.5rem;
+            color: var(--legal-gold);
+        }
+
+        .session-badge {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: var(--steel-light);
+            padding: var(--space-xs) var(--space-md);
+            background: var(--ink-deep);
+            border: 1px solid var(--border-dark);
+        }
+
+        /* Chat Messages Area */
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: var(--space-lg);
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-lg);
+
+            /* Custom scrollbar */
+            &::-webkit-scrollbar {
+                width: 4px;
+            }
+            &::-webkit-scrollbar-track {
+                background: var(--ink-deep);
+            }
+            &::-webkit-scrollbar-thumb {
+                background: var(--legal-gold);
+                border-radius: 2px;
+            }
+        }
+
+        /* Message Styles */
+        .message {
+            display: flex;
+            gap: var(--space-md);
+            animation: messageReveal 0.6s ease-out forwards;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        @keyframes messageReveal {
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message.user {
+            flex-direction: row-reverse;
+        }
+
+        .message-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 0; /* Brutalist - no rounded corners */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-display);
+            font-size: 1.25rem;
+            font-weight: 700;
+            border: 2px solid;
+        }
+
+        .message.user .message-avatar {
+            background: var(--ink-light);
+            color: var(--paper-cream);
+            border-color: var(--border-dark);
+        }
+
+        .message.assistant .message-avatar {
+            background: var(--legal-gold);
+            color: var(--ink-deep);
+            border-color: var(--gold-dark);
+        }
+
+        .message-content {
+            flex: 1;
+            max-width: 70%;
+            padding: var(--space-md) var(--space-lg);
+            position: relative;
+        }
+
+        .message.user .message-content {
+            background: var(--ink-light);
+            border-left: 4px solid var(--border-dark);
+        }
+
+        .message.assistant .message-content {
+            background: var(--ink-deep);
+            border-left: 4px solid var(--legal-gold);
+        }
+
+        .message-text {
+            font-family: var(--font-body);
+            font-size: 1rem;
+            line-height: 1.7;
+            color: var(--paper-cream);
+        }
+
+        .message.assistant .message-text {
+            color: var(--paper-white);
+        }
+
+        /* Citation markers in text */
+        .citation {
+            font-family: var(--font-mono);
+            font-size: 0.875rem;
+            color: var(--legal-gold);
+            padding: var(--space-xs) var(--space-sm);
+            background: rgba(201, 162, 39, 0.1);
+            border: 1px solid var(--legal-gold);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .citation:hover {
+            background: var(--legal-gold);
+            color: var(--ink-deep);
+        }
+
+        /* Agent trace indicator */
+        .agent-trace {
+            display: flex;
+            gap: var(--space-sm);
+            margin-top: var(--space-md);
+            padding-top: var(--space-md);
+            border-top: 1px dashed var(--border-dark);
+        }
+
+        .agent-badge {
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            padding: var(--space-xs) var(--space-sm);
+            background: transparent;
+            border: 1px solid var(--steel-light);
+            color: var(--steel-light);
+            transition: all 0.3s ease;
+        }
+
+        .agent-badge.active {
+            background: var(--legal-gold);
+            border-color: var(--legal-gold);
+            color: var(--ink-deep);
+        }
+
+        /* ========================================
+           Input Bar - Command Style
+           ======================================== */
+        .input-bar {
+            padding: var(--space-lg) var(--space-xl);
+            background: var(--ink-deep);
+            border-top: 2px solid var(--legal-gold);
+            display: flex;
+            gap: var(--space-md);
+            align-items: stretch;
+        }
+
+        .input-wrapper {
+            flex: 1;
+            position: relative;
+        }
+
+        .input-label {
+            position: absolute;
+            top: -8px;
+            left: 0;
+            font-family: var(--font-mono);
+            font-size: 0.625rem;
+            color: var(--legal-gold);
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+
+        .input-field {
+            width: 100%;
+            min-height: 60px;
+            padding: var(--space-md) var(--space-lg);
+            font-family: var(--font-body);
+            font-size: 1rem;
+            color: var(--paper-cream);
+            background: var(--ink-medium);
+            border: 2px solid var(--border-dark);
+            border-radius: 0;
+            resize: none;
+            outline: none;
+            transition: border-color 0.3s ease;
+        }
+
+        .input-field:focus {
+            border-color: var(--legal-gold);
+        }
+
+        .input-field::placeholder {
+            color: var(--steel-light);
+            font-style: italic;
+        }
+
+        .send-button {
+            padding: var(--space-md) var(--space-lg);
+            font-family: var(--font-display);
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--ink-deep);
+            background: var(--legal-gold);
+            border: 2px solid var(--gold-dark);
+            border-radius: 0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+        }
+
+        .send-button:hover {
+            background: var(--gold-light);
+            transform: translateX(-2px);
+        }
+
+        .send-button:active {
+            transform: translateX(0);
+        }
+
+        .send-button::after {
+            content: '→';
+            font-size: 1.25rem;
+        }
+
+        /* ========================================
+           Evidence Panel - Archive Style
+           ======================================== */
+        .evidence-panel {
+            height: calc(100vh - 80px);
+            background: var(--ink-deep);
+            border-left: 3px solid var(--legal-gold);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+
+            /* Paper texture for evidence cards */
+            background-image:
+                linear-gradient(180deg, var(--ink-deep) 0%, rgba(26, 26, 46, 0.95) 100%),
+                url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0h100v100H0z' fill='%23F5F5DC' fill-opacity='0.03'/%3E%3C/svg%3E");
+        }
+
+        .evidence-header {
+            padding: var(--space-lg);
+            border-bottom: 2px solid var(--legal-gold);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .evidence-title {
+            font-family: var(--font-display);
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--paper-cream);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .evidence-count {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: var(--legal-gold);
+            padding: var(--space-xs) var(--space-sm);
+            background: transparent;
+            border: 1px solid var(--legal-gold);
+        }
+
+        /* Evidence List */
+        .evidence-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: var(--space-md);
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-md);
+
+            &::-webkit-scrollbar {
+                width: 3px;
+            }
+            &::-webkit-scrollbar-track {
+                background: var(--ink-medium);
+            }
+            &::-webkit-scrollbar-thumb {
+                background: var(--gold-dark);
+            }
+        }
+
+        /* Evidence Card - Archive Document Style */
+        .evidence-card {
+            background: var(--paper-cream);
+            color: var(--ink-deep);
+            padding: 0;
+            position: relative;
+            border: 1px solid var(--steel-gray);
+            animation: cardSlide 0.5s ease-out forwards;
+            opacity: 0;
+            transform: translateX(30px);
+
+            /* Document fold effect */
+            &::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                right: 0;
+                width: 20px;
+                height: 20px;
+                background: linear-gradient(135deg, transparent 50%, var(--ink-deep) 50%);
+                opacity: 0.1;
+            }
+
+            /* Stamp effect */
+            &::after {
+                content: 'EXHIBIT';
+                position: absolute;
+                top: var(--space-sm);
+                right: var(--space-sm);
+                font-family: var(--font-mono);
+                font-size: 0.5rem;
+                color: var(--evidence-red);
+                letter-spacing: 0.2em;
+                text-transform: uppercase;
+                opacity: 0.6;
+                transform: rotate(-12deg);
+                border: 1px solid var(--evidence-red);
+                padding: 2px 4px;
+            }
+        }
+
+        @keyframes cardSlide {
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .evidence-number {
+            font-family: var(--font-mono);
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--ink-deep);
+            background: var(--legal-gold);
+            padding: var(--space-xs) var(--space-md);
+            display: inline-block;
+            margin-bottom: var(--space-sm);
+        }
+
+        .evidence-content {
+            padding: var(--space-md);
+            padding-top: 0;
+        }
+
+        .evidence-law-name {
+            font-family: var(--font-display);
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--ink-deep);
+            margin-bottom: var(--space-xs);
+            line-height: 1.3;
+        }
+
+        .evidence-article {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: var(--steel-gray);
+            letter-spacing: 0.05em;
+            margin-bottom: var(--space-sm);
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+        }
+
+        .evidence-article::before {
+            content: '—';
+            color: var(--legal-gold);
+        }
+
+        .evidence-text {
+            font-family: var(--font-body);
+            font-size: 0.875rem;
+            color: var(--steel-gray);
+            line-height: 1.5;
+            padding-top: var(--space-sm);
+            border-top: 1px dashed var(--steel-light);
+        }
+
+        .evidence-relevance {
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+            margin-top: var(--space-md);
+            padding-top: var(--space-sm);
+            border-top: 1px solid var(--steel-light);
+        }
+
+        .relevance-bar {
+            flex: 1;
+            height: 4px;
+            background: var(--ink-light);
+            position: relative;
+        }
+
+        .relevance-fill {
+            height: 100%;
+            background: var(--legal-gold);
+            transition: width 0.5s ease;
+        }
+
+        .relevance-score {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: var(--legal-gold);
+        }
+
+        /* ========================================
+           Agent Status Panel
+           ======================================== */
+        .agent-status-panel {
+            padding: var(--space-md);
+            background: var(--ink-medium);
+            border-top: 1px solid var(--border-dark);
+        }
+
+        .status-title {
+            font-family: var(--font-mono);
+            font-size: 0.625rem;
+            color: var(--steel-light);
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            margin-bottom: var(--space-sm);
+        }
+
+        .status-flow {
+            display: flex;
+            align-items: center;
+            gap: var(--space-xs);
+            flex-wrap: wrap;
+        }
+
+        .flow-item {
+            font-family: var(--font-mono);
+            font-size: 0.625rem;
+            padding: var(--space-xs) var(--space-sm);
+            background: transparent;
+            border: 1px solid var(--steel-light);
+            color: var(--steel-light);
+            transition: all 0.3s ease;
+        }
+
+        .flow-item.active {
+            background: var(--legal-gold);
+            border-color: var(--legal-gold);
+            color: var(--ink-deep);
+        }
+
+        .flow-item.completed {
+            background: var(--ink-light);
+            border-color: var(--ink-light);
+            color: var(--paper-cream);
+        }
+
+        .flow-arrow {
+            color: var(--steel-light);
+            font-size: 0.5rem;
+        }
+
+        /* ========================================
+           Loading States
+           ======================================== */
+        .loading-indicator {
+            display: flex;
+            align-items: center;
+            gap: var(--space-md);
+            padding: var(--space-md);
+        }
+
+        .loading-bars {
+            display: flex;
+            gap: var(--space-xs);
+        }
+
+        .loading-bar {
+            width: 4px;
+            height: 20px;
+            background: var(--legal-gold);
+            animation: loadingPulse 1s ease-in-out infinite;
+        }
+
+        .loading-bar:nth-child(2) { animation-delay: 0.2s; }
+        .loading-bar:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes loadingPulse {
+            0%, 100% { transform: scaleY(1); opacity: 1; }
+            50% { transform: scaleY(0.5); opacity: 0.5; }
+        }
+
+        .loading-text {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: var(--steel-light);
+            letter-spacing: 0.1em;
+        }
+
+        /* ========================================
+           Responsive Design
+           ======================================== */
+        @media (max-width: 1024px) {
+            .main-container {
+                grid-template-columns: 1fr;
+            }
+
+            .evidence-panel {
+                position: fixed;
+                right: -380px;
+                width: 380px;
+                transition: right 0.3s ease;
+                z-index: 1001;
+            }
+
+            .evidence-panel.open {
+                right: 0;
+            }
+
+            .evidence-toggle {
+                display: flex;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .masthead {
+                padding: var(--space-md);
+            }
+
+            .masthead-title {
+                font-size: 1.5rem;
+            }
+
+            .chat-panel,
+            .evidence-panel {
+                padding: var(--space-md);
+            }
+
+            .message-content {
+                max-width: 85%;
+            }
+        }
+
+        /* Mobile evidence toggle button */
+        .evidence-toggle {
+            display: none;
+            position: fixed;
+            right: var(--space-md);
+            bottom: calc(80px + var(--space-md));
+            width: 48px;
+            height: 48px;
+            background: var(--legal-gold);
+            color: var(--ink-deep);
+            border: 2px solid var(--gold-dark);
+            border-radius: 0;
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            cursor: pointer;
+            z-index: 1002;
+            transition: all 0.3s ease;
+        }
+
+        .evidence-toggle:hover {
+            background: var(--gold-light);
+        }
+
+        @media (max-width: 1024px) {
+            .evidence-toggle {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+        }
+
+        /* ========================================
+           Utility Classes
+           ======================================== */
+        .hidden { display: none !important; }
+        .visible { display: block !important; }
+
+        /* Focus states for accessibility */
+        :focus-visible {
+            outline: 2px solid var(--legal-gold);
+            outline-offset: 2px;
+        }
+
+        /* Print styles */
+        @media print {
+            .masthead,
+            .input-bar,
+            .evidence-toggle {
+                display: none;
+            }
+
+            .main-container {
+                display: block;
+            }
+
+            .chat-messages {
+                overflow: visible;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- ========================================
+         Masthead Header
+         ======================================== -->
+    <header class="masthead">
+        <div class="masthead-brand">
+            <h1 class="masthead-title">LawAgent</h1>
+            <span class="masthead-subtitle">智能法律咨询系统</span>
+        </div>
+        <div class="masthead-status">
+            <div class="status-indicator">
+                <span class="status-dot"></span>
+                <span>系统在线</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- ========================================
+         Main Container
+         ======================================== -->
+    <main class="main-container">
+
+        <!-- ========================================
+             Chat Panel - Primary Interface
+             ======================================== -->
+        <section class="chat-panel">
+            <div class="chat-header">
+                <h2 class="chat-label">法律咨询对话</h2>
+                <span class="session-badge">SESSION-001</span>
+            </div>
+
+            <div class="chat-messages" id="chatMessages">
+                <!-- Welcome Message -->
+                <div class="message assistant" style="animation-delay: 0.1s;">
+                    <div class="message-avatar">L</div>
+                    <div class="message-content">
+                        <p class="message-text">
+                            欢迎使用 <strong>LawAgent</strong> 智能法律咨询系统。我将基于中华人民共和国法律法规为您提供专业、准确的法律咨询服务。
+                            <br><br>
+                            请输入您的法律问题，我将检索相关法条并进行专业分析。
+                        </p>
+                        <div class="agent-trace">
+                            <span class="agent-badge active">Router</span>
+                            <span class="agent-badge">Quick</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sample User Message -->
+                <div class="message user" style="animation-delay: 0.3s;">
+                    <div class="message-avatar">U</div>
+                    <div class="message-content">
+                        <p class="message-text">
+                            请问专利申请需要满足哪些条件？
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Sample Assistant Message -->
+                <div class="message assistant" style="animation-delay: 0.5s;">
+                    <div class="message-avatar">L</div>
+                    <div class="message-content">
+                        <p class="message-text">
+                            根据《中华人民共和国专利法》的相关规定，专利申请需要满足以下核心条件：
+                            <br><br>
+                            <strong>一、新颖性</strong><br>
+                            该发明或实用新型在申请日前，在国内外出版物上未公开发表，也未公开使用。<span class="citation" data-ref="1">[专利法 §22]</span>
+                            <br><br>
+                            <strong>二、创造性</strong><br>
+                            同申请日以前已有的技术相比，该发明有突出的实质性特点和显著的进步。<span class="citation" data-ref="2">[专利法 §22]</span>
+                            <br><br>
+                            <strong>三、实用性</strong><br>
+                            该发明或者实用新型能够制造或者使用，并且能够产生积极效果。<span class="citation" data-ref="3">[专利法 §22]</span>
+                        </p>
+                        <div class="agent-trace">
+                            <span class="agent-badge completed">Router</span>
+                            <span class="arrow">→</span>
+                            <span class="agent-badge completed">Search</span>
+                            <span class="arrow">→</span>
+                            <span class="agent-badge completed">Analyze</span>
+                            <span class="arrow">→</span>
+                            <span class="agent-badge completed">Summarize</span>
+                            <span class="arrow">→</span>
+                            <span class="agent-badge active">Review</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Loading Indicator -->
+                <div class="loading-indicator hidden" id="loadingIndicator">
+                    <div class="loading-bars">
+                        <div class="loading-bar"></div>
+                        <div class="loading-bar"></div>
+                        <div class="loading-bar"></div>
+                    </div>
+                    <span class="loading-text">正在检索法规...</span>
+                </div>
+            </div>
+
+            <!-- Input Bar -->
+            <div class="input-bar">
+                <div class="input-wrapper">
+                    <label class="input-label">输入法律问题</label>
+                    <textarea class="input-field" id="inputField" placeholder="请描述您的法律问题，例如：劳动合同解除的条件是什么？" rows="2"></textarea>
+                </div>
+                <button class="send-button" id="sendButton">
+                    提交咨询
+                </button>
+            </div>
+        </section>
+
+        <!-- ========================================
+             Evidence Panel - Archive Style
+             ======================================== -->
+        <aside class="evidence-panel" id="evidencePanel">
+            <div class="evidence-header">
+                <h3 class="evidence-title">法规溯源</h3>
+                <span class="evidence-count">3 条引用</span>
+            </div>
+
+            <div class="evidence-list" id="evidenceList">
+                <!-- Evidence Card 1 -->
+                <div class="evidence-card" style="animation-delay: 0.1s;">
+                    <span class="evidence-number">EXHIBIT A</span>
+                    <div class="evidence-content">
+                        <h4 class="evidence-law-name">中华人民共和国专利法</h4>
+                        <p class="evidence-article">第二十二条</p>
+                        <p class="evidence-text">
+                            授予专利权的发明和实用新型，应当具备新颖性、创造性和实用性。新颖性，是指该发明或者实用新型不属于现有技术...
+                        </p>
+                        <div class="evidence-relevance">
+                            <div class="relevance-bar">
+                                <div class="relevance-fill" style="width: 92%;"></div>
+                            </div>
+                            <span class="relevance-score">92%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Evidence Card 2 -->
+                <div class="evidence-card" style="animation-delay: 0.2s;">
+                    <span class="evidence-number">EXHIBIT B</span>
+                    <div class="evidence-content">
+                        <h4 class="evidence-law-name">中华人民共和国专利法</h4>
+                        <p class="evidence-article">第二十三条</p>
+                        <p class="evidence-text">
+                            授予专利权的外观设计，应当不属于现有设计；也没有任何单位或者个人就同样的外观设计在申请日以前向国务院专利行政部门提出过申请...
+                        </p>
+                        <div class="evidence-relevance">
+                            <div class="relevance-bar">
+                                <div class="relevance-fill" style="width: 78%;"></div>
+                            </div>
+                            <span class="relevance-score">78%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Evidence Card 3 -->
+                <div class="evidence-card" style="animation-delay: 0.3s;">
+                    <span class="evidence-number">EXHIBIT C</span>
+                    <div class="evidence-content">
+                        <h4 class="evidence-law-name">中华人民共和国专利法实施细则</h4>
+                        <p class="evidence-article">第二条</p>
+                        <p class="evidence-text">
+                            专利法所称发明，是指对产品、方法或者其改进所提出的新的技术方案。专利法所称实用新型...
+                        </p>
+                        <div class="evidence-relevance">
+                            <div class="relevance-bar">
+                                <div class="relevance-fill" style="width: 65%;"></div>
+                            </div>
+                            <span class="relevance-score">65%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Agent Status Panel -->
+            <div class="agent-status-panel">
+                <span class="status-title">Agent 执行状态</span>
+                <div class="status-flow">
+                    <span class="flow-item completed">Router</span>
+                    <span class="flow-arrow">→</span>
+                    <span class="flow-item completed">Search</span>
+                    <span class="flow-arrow">→</span>
+                    <span class="flow-item completed">Analyze</span>
+                    <span class="flow-arrow">→</span>
+                    <span class="flow-item completed">Summarize</span>
+                    <span class="flow-arrow">→</span>
+                    <span class="flow-item active">Review</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Mobile Evidence Toggle -->
+        <button class="evidence-toggle" id="evidenceToggle">
+            溯源
+        </button>
+    </main>
+
+    <!-- ========================================
+         JavaScript - Interactions
+         ======================================== -->
+    <script>
+        // DOM Elements
+        const chatMessages = document.getElementById('chatMessages');
+        const inputField = document.getElementById('inputField');
+        const sendButton = document.getElementById('sendButton');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const evidencePanel = document.getElementById('evidencePanel');
+        const evidenceToggle = document.getElementById('evidenceToggle');
+        const evidenceList = document.getElementById('evidenceList');
+
+        // Toggle evidence panel on mobile
+        evidenceToggle.addEventListener('click', () => {
+            evidencePanel.classList.toggle('open');
+        });
+
+        // Citation click handler
+        document.querySelectorAll('.citation').forEach(citation => {
+            citation.addEventListener('click', (e) => {
+                const refId = e.target.dataset.ref;
+                const cards = evidenceList.querySelectorAll('.evidence-card');
+                if (cards[refId - 1]) {
+                    cards[refId - 1].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    cards[refId - 1].style.boxShadow = '0 0 20px var(--legal-gold)';
+                    setTimeout(() => {
+                        cards[refId - 1].style.boxShadow = '';
+                    }, 2000);
+                }
+            });
+        });
+
+        // Send message handler
+        sendButton.addEventListener('click', async () => {
+            const message = inputField.value.trim();
+            if (!message) return;
+
+            // Add user message
+            addMessage(message, 'user');
+            inputField.value = '';
+
+            // Show loading
+            loadingIndicator.classList.remove('hidden');
+
+            // Simulate API call (replace with actual API)
+            await simulateResponse(message);
+
+            // Hide loading
+            loadingIndicator.classList.add('hidden');
+        });
+
+        // Enter key handler
+        inputField.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendButton.click();
+            }
+        });
+
+        // Add message to chat
+        function addMessage(text, role) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${role}`;
+            messageDiv.style.animationDelay = '0.1s';
+
+            const avatar = role === 'user' ? 'U' : 'L';
+
+            messageDiv.innerHTML = `
+                <div class="message-avatar">${avatar}</div>
+                <div class="message-content">
+                    <p class="message-text">${text}</p>
+                </div>
+            `;
+
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // Simulate response (for demo)
+        async function simulateResponse(question) {
+            // Simulate delay
+            await new Promise(resolve => setTimeout(resolve, 2000));
+
+            // Demo response
+            const response = `正在分析您的问题：「${question}」
+
+系统正在检索相关法律法规，将通过多 Agent 流水线为您提供专业回答。`;
+
+            addMessage(response, 'assistant');
+        }
+
+        // Animate evidence cards on load
+        document.querySelectorAll('.evidence-card').forEach((card, index) => {
+            card.style.animationDelay = `${0.1 + index * 0.15}s`;
+        });
+
+        // Animate messages on load
+        document.querySelectorAll('.message').forEach((msg, index) => {
+            msg.style.animationDelay = `${0.1 + index * 0.2}s`;
+        });
+    </script>
+</body>
+</html>

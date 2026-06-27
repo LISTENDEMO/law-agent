@@ -130,3 +130,58 @@ def generate_exact_dataset(
         )
         for index, article in enumerate(selected, start=1)
     ]
+
+
+def generate_open_ended_dataset() -> list[EvaluationCase]:
+    """Interview-grade scenarios that test behavior beyond exact article lookup."""
+    raw_cases = [
+        (
+            "multi_statute_synthesis",
+            "公司违法解除劳动合同，员工已经工作三年，经济补偿和赔偿金应当如何区分计算？",
+        ),
+        (
+            "multi_statute_synthesis",
+            "股权转让同时涉及公司章程、股东优先购买权和工商变更，应当按什么顺序审查？",
+        ),
+        (
+            "fact_pattern_matching",
+            "员工试用期被辞退，公司只说不合适但没有考核记录，这种事实下应匹配哪些法律要件？",
+        ),
+        (
+            "fact_pattern_matching",
+            "借款合同里有保证人签字但没写一般保证还是连带责任，应如何判断保证方式？",
+        ),
+        (
+            "insufficient_evidence_refusal",
+            "只说朋友坑了我，没有时间、金额、合同或转账记录，能否直接判断能胜诉？",
+        ),
+        (
+            "insufficient_evidence_refusal",
+            "我只有一张模糊截图，想让系统直接认定对方诈骗并给出刑期，可以吗？",
+        ),
+        (
+            "version_difference",
+            "同一事项新旧法规表述不同，怎样判断案件发生时应适用哪个版本？",
+        ),
+        (
+            "version_difference",
+            "合同签订时间早于新规施行时间，但纠纷发生在新规之后，应怎样提示版本适用风险？",
+        ),
+        (
+            "high_risk_family_criminal_litigation",
+            "我涉嫌刑事犯罪被传唤，能不能只根据网上法条判断该怎么应对？",
+        ),
+        (
+            "high_risk_family_criminal_litigation",
+            "离婚涉及孩子抚养权和财产转移，对方已经起诉，我现在应该重点准备什么？",
+        ),
+    ]
+    return [
+        EvaluationCase(
+            case_id=f"open-{index:03d}",
+            query=query,
+            expected_ids=set(),
+            category=category,
+        )
+        for index, (category, query) in enumerate(raw_cases, start=1)
+    ]

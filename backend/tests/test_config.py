@@ -24,6 +24,13 @@ def test_settings_load_both_openai_compatible_providers() -> None:
     assert settings.embedding.base_url == "https://embed.example/v1"
     assert settings.embedding.model == "embed-model"
     assert settings.offline_mode is True
+    assert settings.model_timeout_seconds == 18.0
+
+
+def test_settings_loads_bounded_model_timeout() -> None:
+    settings = Settings.from_mapping({"LAWAGENT_MODEL_TIMEOUT_SECONDS": "12.5"})
+
+    assert settings.model_timeout_seconds == 12.5
 
 
 def test_settings_repr_redacts_all_secrets() -> None:

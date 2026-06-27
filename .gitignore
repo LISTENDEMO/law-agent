@@ -1,6 +1,8 @@
 # Secrets
 .env
 .env.*.local
+law.env
+*.env
 
 # Local legal corpus and generated data
 /RAG/
@@ -29,6 +31,13 @@ test-results/
 .vscode/
 .DS_Store
 Thumbs.db
+bash.exe.stackdump
+
+# Playwright MCP
+.playwright-mcp/
+
+# Deploy outputs
+deploy-output/
 
 # Worktrees
 .worktrees/

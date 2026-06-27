@@ -5,6 +5,7 @@ from app.evaluation.runner import (
     EvaluationCase,
     citation_completeness,
     citation_precision,
+    generate_open_ended_dataset,
     generate_exact_dataset,
     mean_reciprocal_rank,
     recall_at_k,
@@ -71,3 +72,18 @@ def test_exact_dataset_generation_is_deterministic_and_unique() -> None:
     assert len(cases) == 3
     assert len({case.case_id for case in cases}) == 3
     assert cases[0].query == "《示例法0》第0条的内容是什么？"
+
+
+def test_open_ended_dataset_covers_interview_grade_legal_scenarios() -> None:
+    cases = generate_open_ended_dataset()
+    categories = {case.category for case in cases}
+
+    assert {
+        "multi_statute_synthesis",
+        "fact_pattern_matching",
+        "insufficient_evidence_refusal",
+        "version_difference",
+        "high_risk_family_criminal_litigation",
+    } <= categories
+    assert len(cases) >= 10
+    assert all(case.query and case.case_id.startswith("open-") for case in cases)

@@ -14,17 +14,28 @@ const icons = { supervisor: BrainCircuit, legal_research: Search, legal_analysis
 interface TraceRailProps { events: AgentEvent[]; agents: AgentName[] }
 
 export function TraceRail({ events, agents }: TraceRailProps) {
+  const activeAgent = [...events].reverse().find((event) => event.agent && event.type.endsWith('started'))?.agent ?? null
+  const completedAgents = new Set(
+    events
+      .filter((event) => event.agent && event.type === 'agent.completed')
+      .map((event) => event.agent as AgentName),
+  )
+  const usedAgents = new Set(agents)
+  const visibleAgents = Object.keys(labels) as AgentName[]
+
   return (
     <aside className="trace-panel" aria-label="Agent 执行轨迹" data-lawagent-trace-panel>
       <div className="panel-kicker"><span>TRACE / 03</span><b>Agent 协作</b></div>
       <div className="trace-list">
-        {(agents.length ? agents : (Object.keys(labels) as AgentName[])).map((agent, index) => {
+        {visibleAgents.map((agent, index) => {
           const Icon = icons[agent]
-          const done = agents.includes(agent)
-          return <div className={`agent-node ${done ? 'done' : ''}`} key={agent}><div className="agent-line"><i>{done ? <Check size={12} /> : index + 1}</i></div><span className="agent-icon"><Icon size={17} /></span><div><b>{labels[agent][0]}</b><span>{labels[agent][1]}</span></div>{done && <em>完成</em>}</div>
+          const done = completedAgents.has(agent)
+          const active = activeAgent === agent && !done
+          const idle = !active && !done && !usedAgents.has(agent)
+          return <div className={`agent-node ${done ? 'done' : ''} ${active ? 'active' : ''} ${idle ? 'idle' : ''}`} key={agent}><div className="agent-line"><i>{done ? <Check size={12} /> : index + 1}</i></div><span className="agent-icon"><Icon size={17} /></span><div><b>{labels[agent][0]}</b><span>{labels[agent][1]}</span></div>{active && <em>运行中</em>}{done && <em>完成</em>}{idle && <em>待命</em>}</div>
         })}
       </div>
-      <div className="event-log" data-lawagent-event-log><header><span>运行日志</span><b>{events.length} EVENTS</b></header>{events.slice(-5).map((event) => <div key={event.sequence}><time>{String(event.sequence).padStart(2, '0')}</time><p>{event.summary}</p></div>)}</div>
+      <div className="event-log" data-lawagent-event-log><header><span>运行日志</span><b>{events.length} EVENTS</b></header>{events.slice(-8).map((event) => <div key={event.sequence}><time>{String(event.sequence).padStart(2, '0')}</time><p>{event.summary}</p></div>)}</div>
     </aside>
   )
 }

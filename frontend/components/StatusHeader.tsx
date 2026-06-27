@@ -7,9 +7,8 @@ export function StatusHeader() {
         <span className="brand-seal" aria-hidden="true"><Scale size={19} /></span>
         <div><strong>LawAgent</strong><span>法律研究工作台</span></div>
       </div>
-      <div className="system-status"><i /><span>法规索引在线</span><b>1,032</b></div>
+      <div className="system-status"><i /><span>法规索引在线</span><b>45,552</b></div>
       <div className="trust-mark"><ShieldCheck size={15} /><span>证据约束生成</span></div>
     </header>
   )
 }
-

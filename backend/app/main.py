@@ -63,10 +63,20 @@ def create_app(
     repository: Repository,
     *,
     admin_api_key: str,
+    chat_rate_limit_per_minute: int = 30,
+    data_dir: Path | None = None,
 ) -> FastAPI:
     application = FastAPI(title="LawAgent API", version="0.1.0")
-    application.include_router(create_chat_router(workflow, repository))
-    application.include_router(create_admin_router(admin_api_key))
+    application.include_router(
+        create_chat_router(
+            workflow,
+            repository,
+            rate_limit_per_minute=chat_rate_limit_per_minute,
+        )
+    )
+    application.include_router(
+        create_admin_router(admin_api_key, repository, data_dir=data_dir or repository.path.parent)
+    )
 
     @application.get("/api/v1/health")
     def health() -> dict[str, str]:
@@ -87,11 +97,13 @@ def create_default_app() -> FastAPI:
         model = OpenAIStructuredClient(
             settings.chat,
             max_retries=settings.max_retries,
+            timeout=settings.model_timeout_seconds,
         )
     return create_app(
         AgentWorkflow(RuntimeSearch(settings), model=model),
         repository,
         admin_api_key=settings.admin_api_key.get_secret_value(),
+        data_dir=settings.data_dir,
     )
 
 
